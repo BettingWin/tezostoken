@@ -1,0 +1,55 @@
+parameter (pair key tez);
+storage (pair (map key tez)    # balance map
+              (pair nat    # total supply
+                    (pair nat    # decimals
+                          (pair string    # name
+                                string))));    # symbol
+return nat;    # 0: success; 1: no such account; 2: balance insufficient
+code { # preserve storage
+       DUP; DIP { CDR };
+       # get input parameter
+       DUP; CAR;
+       # get balance map
+       DIP { CDAR };
+       # put balance map on the stack top and dup param
+       SWAP; DIP { DUP };
+       # get source key
+       DUP;
+       SOURCE unit unit;
+       MANAGER;
+       # preserve source key
+       DUP; DIP { SWAP };
+       # get balance from source key
+       GET;
+       IF_NONE { # no source key account
+                 DROP; DROP; DROP; DROP;
+                 PUSH nat 1 } 
+               { # check if balance is sufficient
+                 DIP { DIP { SWAP }; SWAP; CDR };
+                 # preserve balance
+                 DUP; DIP { SWAP };
+                 IFCMPGE { # balance is sufficient
+                           DIIP { SWAP;
+                                  DUP; 
+                                  DIIP { DUP };
+                                  DIP { CAR; GET;
+                                        IF_NONE { PUSH tez "0" } {} } };
+                           DIIP { DUP; DUP; DIIP { SWAP } };
+                           # calculation
+                           DIP { SWAP; CDR; };
+                           SUB; SOME; SWAP;
+                           DIIP { CDR; ADD; SOME; SWAP; CAR };
+                           # update balance map
+                           DIIP { DIP { SWAP }; SWAP };
+                           UPDATE;
+                           SWAP; DIP { SWAP };
+                           UPDATE;
+                           # replace new balance map
+                           DIP { CDR };
+                           PAIR;
+                           # return success
+                           PUSH nat 0 } 
+                         { # balance is insufficient
+                           DROP; DROP; DROP; DROP;
+                           PUSH nat 2 } };
+       PAIR };
