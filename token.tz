@@ -1,5 +1,5 @@
-parameter (pair key tez);
-storage (pair (map key tez)    # balance map
+parameter (pair key nat);
+storage (pair (map key nat)    # balance map
               (pair nat    # total supply
                     (pair nat    # decimals
                           (pair string    # name
@@ -33,11 +33,11 @@ code { # preserve storage
                                   DUP; 
                                   DIIP { DUP };
                                   DIP { CAR; GET;
-                                        IF_NONE { PUSH tez "0" } {} } };
+                                        IF_NONE { PUSH nat 0 } {} } };
                            DIIP { DUP; DUP; DIIP { SWAP } };
                            # calculation
                            DIP { SWAP; CDR; };
-                           SUB; SOME; SWAP;
+                           SUB; ABS; SOME; SWAP;
                            DIIP { CDR; ADD; SOME; SWAP; CAR };
                            # update balance map
                            DIIP { DIP { SWAP }; SWAP };
